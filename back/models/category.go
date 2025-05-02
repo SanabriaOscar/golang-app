@@ -2,5 +2,5 @@ package models
 
 type Category struct {
 	Id   int    `json:"id"`
-	Name string `json:"nombre"`
+	Name string `json:"name"`
 }

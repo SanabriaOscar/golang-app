@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "@angular/animations": "^19.2.9",
+    "@angular/common": "^19.2.9",
+    "@angular/compiler": "^19.2.9",
+    "@angular/core": "^19.2.9",
+    "@angular/forms": "^19.2.9",
+    "@angular/platform-browser": "^19.2.9",
+    "@angular/platform-browser-dynamic": "^19.2.9",
+    "@angular/platform-server": "^19.2.9",
+    "@angular/router": "^19.2.9",
+    "@angular/ssr": "^19.2.10",
+    "@ionic/angular": "^8.5.6",
+    "@ionic/angular-toolkit": "^12.2.0",
+    "@ngrx/effects": "^19.1.0",
+    "@ngrx/router-store": "^19.1.0",
+    "@ngrx/store": "^19.1.0",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.10",
+    "@angular/cli": "^19.2.10",
+    "@angular/compiler-cli": "^19.2.9",
+    "typescript": "^5.8.3"
+  }
+}

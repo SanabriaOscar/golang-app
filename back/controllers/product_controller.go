@@ -10,8 +10,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func GetProducts(w http.ResponseWriter, r *http.Request) {
-	product, err := services.FindAllProducts()
+type ProductController struct {
+	Service *services.ProductService
+}
+
+func (s *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) {
+	product, err := s.Service.GetAllProducts()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -22,9 +26,9 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetProductById(w http.ResponseWriter, r *http.Request) {
+func (s *ProductController) GetProductById(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	product, err := services.FindProductByID(id)
+	product, err := s.Service.GetProductById(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,14 +38,14 @@ func GetProductById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
+func (s *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product models.Product
 	err := json.NewDecoder(r.Body).Decode(&product)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	product, err = services.CreateNewProduct(&product)
+	product, err = s.Service.CreateProduct(&product)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -51,7 +55,7 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (s *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	var product models.Product
 	err := json.NewDecoder(r.Body).Decode(&product)
@@ -59,7 +63,7 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	product, err = services.UpdateExistingProduct(&product, id)
+	product, err = s.Service.UpdateProduct(&product, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -69,9 +73,9 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-func DeleteProduct(w http.ResponseWriter, r *http.Request) {
+func (s *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	err := services.DeleteExistingProduct(id)
+	err := s.Service.DeleteProduct(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

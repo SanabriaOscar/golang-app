@@ -5,22 +5,26 @@ import (
 	"backend-go/repositories"
 )
 
-func FindAllProducts() ([]models.Product, error) {
-	return repositories.GetAllProducts()
+type ProductService struct {
+	Repo repositories.IProductRepository
 }
 
-func FindProductByID(id int) (models.Product, error) {
-	return repositories.GetProductById(id)
+func (s *ProductService) GetAllProducts() ([]models.Product, error) {
+	return s.Repo.GetAllProducts()
 }
 
-func CreateNewProduct(product *models.Product) (models.Product, error) {
-	return repositories.CreateProduct(*product)
+func (s *ProductService) GetProductById(id int) (models.Product, error) {
+	return s.Repo.GetProductById(id)
 }
 
-func UpdateExistingProduct(product *models.Product, id int) (models.Product, error) {
-	return repositories.UpdateProduct(*product)
+func (s *ProductService) CreateProduct(product *models.Product) (models.Product, error) {
+	return s.Repo.CreateProduct(*product)
 }
 
-func DeleteExistingProduct(id int) error {
-	return repositories.DeleteProduct(id)
+func (s *ProductService) UpdateProduct(product *models.Product, id int) (models.Product, error) {
+	return s.Repo.UpdateProduct(id, *product)
+}
+
+func (s *ProductService) DeleteProduct(id int) error {
+	return s.Repo.DeleteProduct(id)
 }
