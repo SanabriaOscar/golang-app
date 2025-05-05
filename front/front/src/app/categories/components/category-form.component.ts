@@ -4,11 +4,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { IonicModule } from '@ionic/angular';
 
-import { addCategory, updateCategory } from '../store/category.actions';
+import { addCategory, updateCategory, loadCategories } from '../store/category.actions';
 import { Category } from '../category.model';
 import { selectAllCategories } from '../store/category.selectors';
 import { CommonModule } from '@angular/common';
 import { filter, take } from 'rxjs';
+import { AlertService } from '../../shared/services/alert.service';
 
 @Component({
   selector: 'app-category-form',
@@ -73,10 +74,13 @@ export class CategoryFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly alertService = inject(AlertService);
 
   isEdit = false;
 
   ngOnInit() {
+    this.store.dispatch(loadCategories());
+
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEdit = true;
@@ -91,33 +95,68 @@ export class CategoryFormComponent implements OnInit {
           next: (categories) => {
             const category = categories.find(c => c.id === id);
             if (category) {
-              this.form.patchValue(category);
+              console.log('Cargando categoría:', category);
+              this.form.patchValue({
+                id: category.id,
+                name: category.name
+              });
             } else {
-              console.error('Category not found');
+              console.error('Categoría no encontrada:', id);
+              this.alertService.showError('Categoría no encontrada', 'La categoría que intentas editar no existe.');
               this.router.navigate(['/categories']);
             }
           },
           error: (error) => {
-            console.error('Error loading category:', error);
+            console.error('Error al cargar la categoría:', error);
+            this.alertService.showError('Error al cargar', 'No se pudo cargar la información de la categoría.');
             this.router.navigate(['/categories']);
           }
         });
     }
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.form.valid) {
+      const formValue = this.form.value;
       const category: Category = {
-        id: this.form.value.id ?? 0,
-        name: this.form.value.name ?? ''
+        id: formValue.id ?? 0,
+        name: formValue.name ?? ''
       };
 
-      if (this.isEdit) {
-        this.store.dispatch(updateCategory({ category }));
-      } else {
-        this.store.dispatch(addCategory({ category }));
+      try {
+        if (this.isEdit) {
+          if (!category.id) {
+            throw new Error('ID de categoría no válido');
+          }
+
+          this.store.dispatch(updateCategory({ category }));
+          await this.alertService.showSuccess(
+            'Categoría Actualizada',
+            'La categoría ha sido actualizada exitosamente.'
+          );
+        } else {
+          this.store.dispatch(addCategory({ category }));
+          await this.alertService.showSuccess(
+            'Categoría Creada',
+            'La categoría ha sido creada exitosamente.'
+          );
+        }
+
+        setTimeout(() => {
+          this.router.navigate(['/categories']);
+        }, 1000);
+      } catch (error) {
+        console.error('Error al procesar la categoría:', error);
+        this.alertService.showError(
+          'Error',
+          'Ha ocurrido un error al procesar la solicitud.'
+        );
       }
-      this.router.navigate(['/categories']);
+    } else {
+      this.alertService.showError(
+        'Formulario Inválido',
+        'Por favor, completa todos los campos requeridos.'
+      );
     }
   }
 }

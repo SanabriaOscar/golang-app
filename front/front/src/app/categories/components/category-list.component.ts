@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { IonicModule, AlertController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 
 import { loadCategories, deleteCategory } from '../store/category.actions';
 import { selectAllCategories } from '../store/category.selectors';
 import { Category } from '../category.model';
+import { AlertService } from '../../shared/services/alert.service';
 
 @Component({
   selector: 'app-category-list',
@@ -56,13 +57,12 @@ import { Category } from '../category.model';
     <ion-spinner *ngIf="!(categories$ | async)"></ion-spinner>
   </ion-content>
 `
-
-
 })
 export class CategoryListComponent implements OnInit {
   categories$!: Observable<Category[]>;
   private readonly store = inject(Store);
-  private readonly alertCtrl = inject(AlertController);
+  private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
 
   ngOnInit() {
     this.categories$ = this.store.select(selectAllCategories);
@@ -74,23 +74,29 @@ export class CategoryListComponent implements OnInit {
   }
 
   onEdit(id: number) {
-    window.location.href = `/categories/edit/${id}`;
+    this.router.navigate(['/categories/edit', id]);
   }
 
   async onDelete(id: number) {
-    const alert = await this.alertCtrl.create({
-      header: 'Confirmar eliminación',
-      message: '¿Estás seguro de que quieres eliminar esta categoría?',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          handler: () => {
-            this.store.dispatch(deleteCategory({ id }));
-          }
-        }
-      ]
-    });
-    await alert.present();
+    try {
+      const result = await this.alertService.showConfirm(
+        '¿Estás seguro?',
+        'Esta acción no se puede deshacer'
+      );
+
+      if (result.isConfirmed) {
+        await this.alertService.showLoading('Eliminando...');
+        this.store.dispatch(deleteCategory({ id }));
+        await this.alertService.showSuccess(
+          '¡Eliminado!',
+          'La categoría ha sido eliminada exitosamente'
+        );
+      }
+    } catch (error) {
+      this.alertService.showError(
+        'Error',
+        'Ha ocurrido un error al eliminar la categoría'
+      );
+    }
   }
 }
