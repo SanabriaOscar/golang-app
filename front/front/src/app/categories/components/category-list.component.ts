@@ -13,7 +13,7 @@ import { Category } from '../category.model';
   selector: 'app-category-list',
   standalone: true,
   host: {
-    'ngSkipHydration': 'true'  // 👈 esto evita errores de mismatch en SSR/Hydration
+    'ngSkipHydration': 'true'
   },
   imports: [IonicModule, CommonModule, RouterModule],
   template: `

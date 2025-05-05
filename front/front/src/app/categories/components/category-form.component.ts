@@ -8,7 +8,7 @@ import { addCategory, updateCategory } from '../store/category.actions';
 import { Category } from '../category.model';
 import { selectAllCategories } from '../store/category.selectors';
 import { CommonModule } from '@angular/common';
-import { take } from 'rxjs';
+import { filter, take } from 'rxjs';
 
 @Component({
   selector: 'app-category-form',
@@ -17,27 +17,52 @@ import { take } from 'rxjs';
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/categories"></ion-back-button>
+        </ion-buttons>
         <ion-title>{{ isEdit ? 'Editar Categoría' : 'Crear Categoría' }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="category-form">
         <ion-item>
           <ion-label position="floating">Nombre</ion-label>
-          <ion-input formControlName="name"></ion-input>
+          <ion-input formControlName="name" type="text"></ion-input>
         </ion-item>
 
-        <ion-text color="danger" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+        <ion-text color="danger" *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="error-message">
           El nombre es requerido.
         </ion-text>
 
-        <ion-button expand="block" type="submit" [disabled]="form.invalid">
-          {{ isEdit ? 'Actualizar' : 'Guardar' }}
-        </ion-button>
+        <div class="form-actions">
+          <ion-button expand="block" type="submit" [disabled]="form.invalid" color="primary">
+            {{ isEdit ? 'Actualizar' : 'Guardar' }}
+          </ion-button>
+        </div>
       </form>
     </ion-content>
-  `
+  `,
+  styles: [`
+    .category-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .error-message {
+      display: block;
+      margin: 5px 0 15px 16px;
+      font-size: 12px;
+    }
+    .form-actions {
+      margin-top: 20px;
+    }
+    ion-item {
+      --padding-start: 0;
+      --inner-padding-end: 0;
+      margin-bottom: 10px;
+    }
+  `]
 })
 export class CategoryFormComponent implements OnInit {
   form = inject(FormBuilder).group({
@@ -57,25 +82,42 @@ export class CategoryFormComponent implements OnInit {
       this.isEdit = true;
       const id = parseInt(idParam, 10);
 
-      this.store.select(selectAllCategories).pipe(take(1)).subscribe(categories => {
-        const category = categories.find(c => c.id === id);
-        if (category) {
-          this.form.patchValue(category);
-        }
-      });
+      this.store.select(selectAllCategories)
+        .pipe(
+          filter(categories => categories.length > 0),
+          take(1)
+        )
+        .subscribe({
+          next: (categories) => {
+            const category = categories.find(c => c.id === id);
+            if (category) {
+              this.form.patchValue(category);
+            } else {
+              console.error('Category not found');
+              this.router.navigate(['/categories']);
+            }
+          },
+          error: (error) => {
+            console.error('Error loading category:', error);
+            this.router.navigate(['/categories']);
+          }
+        });
     }
   }
 
   onSubmit() {
-    const category: Category = {
-      id: this.form.value.id ?? 0,
-      name: this.form.value.name ?? ''
-    };
-    if (this.isEdit) {
-      this.store.dispatch(updateCategory({ category }));
-    } else {
-      this.store.dispatch(addCategory({ category }));
+    if (this.form.valid) {
+      const category: Category = {
+        id: this.form.value.id ?? 0,
+        name: this.form.value.name ?? ''
+      };
+
+      if (this.isEdit) {
+        this.store.dispatch(updateCategory({ category }));
+      } else {
+        this.store.dispatch(addCategory({ category }));
+      }
+      this.router.navigate(['/categories']);
     }
-    this.router.navigate(['/categories']);
   }
 }
